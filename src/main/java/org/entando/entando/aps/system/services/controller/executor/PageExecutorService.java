@@ -16,7 +16,9 @@ package org.entando.entando.aps.system.services.controller.executor;
 import com.agiletec.aps.system.RequestContext;
 import com.agiletec.aps.system.SystemConstants;
 import com.agiletec.aps.system.services.page.IPage;
+import com.agiletec.aps.system.services.pagemodel.IPageModelManager;
 import com.agiletec.aps.system.services.pagemodel.PageModel;
+import com.agiletec.aps.util.ApsWebApplicationUtils;
 
 import freemarker.template.Template;
 
@@ -53,7 +55,8 @@ public class PageExecutorService implements ExecutorServiceInterface {
 				return;
 			}
 			IPage page = (IPage) reqCtx.getExtraParam(SystemConstants.EXTRAPAR_CURRENT_PAGE);
-			PageModel model = page.getModel();
+            IPageModelManager pageModelManager = (IPageModelManager) ApsWebApplicationUtils.getBean(SystemConstants.PAGE_MODEL_MANAGER, request);
+			PageModel model = pageModelManager.getPageModel(page.getModelCode());
 			if (StringUtils.isBlank(model.getTemplate())) {
 				String jspPath = model.getPageModelJspPath();
 				RequestDispatcher dispatcher = request.getSession().getServletContext().getRequestDispatcher(jspPath);
