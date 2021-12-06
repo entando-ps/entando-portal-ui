@@ -46,9 +46,11 @@ import com.agiletec.aps.system.services.page.IPage;
 import com.agiletec.aps.system.services.page.Widget;
 import com.agiletec.aps.system.services.user.UserDetails;
 import com.agiletec.aps.tags.util.IFrameDecoratorContainer;
+import com.agiletec.aps.util.ApsProperties;
 import com.agiletec.aps.util.ApsWebApplicationUtils;
 
 import freemarker.template.Template;
+import org.entando.entando.aps.system.services.widgettype.IWidgetTypeManager;
 
 /**
  * @author E.Santoboni
@@ -77,14 +79,16 @@ public abstract class AbstractWidgetExecutorService {
 			throws ApsSystemException {
 		StringBuilder buffer = new StringBuilder();
 		try {
-			if (null != widget && this.isUserAllowed(reqCtx, widget)) {
-				reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_WIDGET, widget);
+            IWidgetTypeManager widgetTypeManager = (IWidgetTypeManager) ApsWebApplicationUtils.getBean(SystemConstants.WIDGET_TYPE_MANAGER, reqCtx.getRequest());
+			WidgetType type = (null != widget) ? widgetTypeManager.getWidgetType(widget.getTypeCode()) : null;
+            if (null != widget && this.isUserAllowed(reqCtx, type)) {
+				reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_WIDGET, CurrentLogicWidget.extractCurrentWidget(widget, widgetTypeManager));
 			} else {
 				reqCtx.removeExtraParam(SystemConstants.EXTRAPAR_CURRENT_WIDGET);
 			}
 			buffer.append(this.extractDecoratorsOutput(reqCtx, widget, decorators, false, true));
-			if (null != widget && this.isUserAllowed(reqCtx, widget)) {
-				String widgetOutput = extractWidgetOutput(reqCtx, widget.getType());
+			if (null != widget && this.isUserAllowed(reqCtx, type)) {
+				String widgetOutput = extractWidgetOutput(reqCtx, type);
 				// String widgetJspPath = widget.getType().getJspPath();
 				buffer.append(this.extractDecoratorsOutput(reqCtx, widget, decorators, true, true));
 				// buffer.append(this.extractJspOutput(reqCtx, widgetJspPath));
@@ -196,8 +200,8 @@ public abstract class AbstractWidgetExecutorService {
 			Integer frame = (Integer) reqCtx.getExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME);
 			Widget currentWidget = (Widget) reqCtx.getExtraParam(SystemConstants.EXTRAPAR_CURRENT_WIDGET);
 			StringBuilder templateName = new StringBuilder(String.valueOf(frame)).append("_").append(fragment.getCode());
-			if (null != currentWidget && null != currentWidget.getType()) {
-				templateName.append("_").append(currentWidget.getType().getCode());
+			if (null != currentWidget && null != currentWidget.getTypeCode()) {
+				templateName.append("_").append(currentWidget.getTypeCode());
 			}
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			Writer out = new OutputStreamWriter(baos);
@@ -212,11 +216,11 @@ public abstract class AbstractWidgetExecutorService {
 		}
 	}
 
-	protected boolean isUserAllowed(RequestContext reqCtx, Widget widget) {
-		if (null == widget) {
+	protected boolean isUserAllowed(RequestContext reqCtx, WidgetType widgetType) {
+		if (null == widgetType) {
 			return false;
 		}
-		String widgetTypeGroup = widget.getType().getMainGroup();
+		String widgetTypeGroup = widgetType.getMainGroup();
 		try {
 			if (null == widgetTypeGroup || widgetTypeGroup.equals(Group.FREE_GROUP_NAME)) {
 				return true;
@@ -254,5 +258,35 @@ public abstract class AbstractWidgetExecutorService {
 		dispatcher.include(request, wrapper);
 		return wrapper.getOutput();
 	}
+    
+    public static class CurrentLogicWidget extends Widget {
+        
+        private ApsProperties config;
+        private Widget concrete;
+        
+        public CurrentLogicWidget(Widget concrete, ApsProperties logicParameters) {
+            this.concrete = concrete;
+            this.config = logicParameters;
+        }
+        
+        public static Widget extractCurrentWidget(Widget concrete, IWidgetTypeManager widgetTypeManager) {
+            WidgetType type = widgetTypeManager.getWidgetType(concrete.getTypeCode());
+            if (type.isLogic()) {
+                return new CurrentLogicWidget(concrete, type.getConfig());
+            }
+            return concrete;
+        }
+
+        @Override
+        public String getTypeCode() {
+            return this.concrete.getTypeCode();
+        }
+
+        @Override
+        public ApsProperties getConfig() {
+            return this.config;
+        }
+        
+    }
 
 }
