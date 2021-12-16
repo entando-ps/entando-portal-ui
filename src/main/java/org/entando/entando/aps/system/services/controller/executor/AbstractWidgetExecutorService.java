@@ -13,6 +13,7 @@
  */
 package org.entando.entando.aps.system.services.controller.executor;
 
+import com.agiletec.aps.system.EntThreadLocal;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -50,6 +51,7 @@ import com.agiletec.aps.util.ApsProperties;
 import com.agiletec.aps.util.ApsWebApplicationUtils;
 
 import freemarker.template.Template;
+import java.util.Arrays;
 import org.entando.entando.aps.system.services.widgettype.IWidgetTypeManager;
 
 /**
@@ -63,11 +65,19 @@ public abstract class AbstractWidgetExecutorService {
 		try {
 			List<IFrameDecoratorContainer> decorators = this.extractDecorators(reqCtx);
 			Widget[] widgets = page.getWidgets();
-			for (int frame = 0; frame < widgets.length; frame++) {
-				reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, new Integer(frame));
+			List<Widget> widgetList = Arrays.asList(widgets);
+            widgetList.parallelStream().forEach(w -> {
+                EntThreadLocal.init();
+                int frame = widgetList.indexOf(w);
+                reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
 				Widget widget = widgets[frame];
-				widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
-			}
+                try {
+                    widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
+                } catch (Exception e) {
+                    _logger.error("Error extracting output for frame " + frame, e);
+                }
+                EntThreadLocal.destroy();
+            });
 		} catch (Throwable t) {
 			String msg = "Error detected during widget preprocessing";
 			_logger.error(msg, t);
@@ -89,9 +99,7 @@ public abstract class AbstractWidgetExecutorService {
 			buffer.append(this.extractDecoratorsOutput(reqCtx, widget, decorators, false, true));
 			if (null != widget && this.isUserAllowed(reqCtx, type)) {
 				String widgetOutput = extractWidgetOutput(reqCtx, type);
-				// String widgetJspPath = widget.getType().getJspPath();
 				buffer.append(this.extractDecoratorsOutput(reqCtx, widget, decorators, true, true));
-				// buffer.append(this.extractJspOutput(reqCtx, widgetJspPath));
 				buffer.append(widgetOutput);
 				buffer.append(this.extractDecoratorsOutput(reqCtx, widget, decorators, true, false));
 			}
