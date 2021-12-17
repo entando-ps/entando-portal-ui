@@ -22,6 +22,8 @@ import com.agiletec.aps.system.RequestContext;
 import com.agiletec.aps.system.SystemConstants;
 import com.agiletec.aps.system.services.page.IPage;
 import com.agiletec.aps.tags.util.HeadInfoContainer;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author E.Santoboni
@@ -40,9 +42,9 @@ public class WidgetExecutorService extends AbstractWidgetExecutorService impleme
 		try {
 			reqCtx.addExtraParam(SystemConstants.EXTRAPAR_HEAD_INFO_CONTAINER, new HeadInfoContainer());
 			IPage page = (IPage) reqCtx.getExtraParam(SystemConstants.EXTRAPAR_CURRENT_PAGE);
-			String[] widgetOutput = new String[page.getWidgets().length];
-			reqCtx.addExtraParam("ShowletOutput", widgetOutput);
-			this.buildWidgetsOutput(reqCtx, page, widgetOutput);
+            List<String> widgetOutputList = new CopyOnWriteArrayList<>();
+			this.buildWidgetsOutput(reqCtx, page, widgetOutputList);
+            reqCtx.addExtraParam("ShowletOutput", widgetOutputList.toArray(new String[0]));
 			String redirect = (String) reqCtx.getExtraParam(SystemConstants.EXTRAPAR_EXTERNAL_REDIRECT);
 			if (null != redirect) {
 				HttpServletResponse response = (HttpServletResponse) reqCtx.getResponse();

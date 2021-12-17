@@ -60,8 +60,14 @@ import org.entando.entando.aps.system.services.widgettype.IWidgetTypeManager;
 public abstract class AbstractWidgetExecutorService {
 
 	private static final Logger _logger = LoggerFactory.getLogger(AbstractWidgetExecutorService.class);
+    
+    @Deprecated
+    protected void buildWidgetsOutput(RequestContext reqCtx, IPage page, String[] widgetOutput) throws ApsSystemException {
+        List<String> widgetOutputList = Arrays.asList(widgetOutput);
+        this.buildWidgetsOutput(reqCtx, page, widgetOutputList);
+    }
 
-	protected void buildWidgetsOutput(RequestContext reqCtx, IPage page, String[] widgetOutput) throws ApsSystemException {
+	protected void buildWidgetsOutput(RequestContext reqCtx, IPage page, List<String> widgetOutput) throws ApsSystemException {
 		try {
 			List<IFrameDecoratorContainer> decorators = this.extractDecorators(reqCtx);
 			Widget[] widgets = page.getWidgets();
@@ -72,7 +78,7 @@ public abstract class AbstractWidgetExecutorService {
                 reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
 				Widget widget = widgets[frame];
                 try {
-                    widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
+                    widgetOutput.add(frame, this.buildWidgetOutput(reqCtx, widget, decorators));
                 } catch (Exception e) {
                     _logger.error("Error extracting output for frame " + frame, e);
                 }
