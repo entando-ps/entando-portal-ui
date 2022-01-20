@@ -13,6 +13,7 @@
  */
 package org.entando.entando.aps.system.services.controller.executor;
 
+import com.agiletec.aps.system.ReqCtxThreadLocal;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -50,7 +51,9 @@ import com.agiletec.aps.util.ApsProperties;
 import com.agiletec.aps.util.ApsWebApplicationUtils;
 
 import freemarker.template.Template;
+import java.util.Arrays;
 import org.entando.entando.aps.system.services.widgettype.IWidgetTypeManager;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  * @author E.Santoboni
@@ -58,16 +61,37 @@ import org.entando.entando.aps.system.services.widgettype.IWidgetTypeManager;
 public abstract class AbstractWidgetExecutorService {
 
 	private static final Logger _logger = LoggerFactory.getLogger(AbstractWidgetExecutorService.class);
+    
+    @Value("${PARALLEL_WIDGET_RENDER:false}")
+    private boolean parallelWidgetRender;
 
 	protected void buildWidgetsOutput(RequestContext reqCtx, IPage page, String[] widgetOutput) throws ApsSystemException {
 		try {
 			List<IFrameDecoratorContainer> decorators = this.extractDecorators(reqCtx);
 			Widget[] widgets = page.getWidgets();
-			for (int frame = 0; frame < widgets.length; frame++) {
-				reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, new Integer(frame));
-				Widget widget = widgets[frame];
-				widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
-			}
+            if (this.parallelWidgetRender) {
+                List<Widget> widgetList = Arrays.asList(widgets);
+                widgetList.parallelStream().forEach(w -> {
+                    ReqCtxThreadLocal.init();
+                    int frame = widgetList.indexOf(w);
+                    reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
+                    Widget widget = widgets[frame];
+                    try {
+                        widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
+                    } catch (Exception e) {
+                        _logger.error("Error extracting output for frame " + frame, e);
+                    }
+                    ReqCtxThreadLocal.destroy();
+                });
+            } else {
+                ReqCtxThreadLocal.init();
+                for (int frame = 0; frame < widgets.length; frame++) {
+                    reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
+                    Widget widget = widgets[frame];
+                    widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
+                }
+                ReqCtxThreadLocal.destroy();
+            }
 		} catch (Throwable t) {
 			String msg = "Error detected during widget preprocessing";
 			_logger.error(msg, t);
