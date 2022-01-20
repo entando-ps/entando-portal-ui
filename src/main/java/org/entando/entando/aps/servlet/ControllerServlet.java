@@ -31,6 +31,7 @@ import com.agiletec.aps.system.SystemConstants;
 import com.agiletec.aps.system.services.baseconfig.ConfigInterface;
 import com.agiletec.aps.system.services.controller.ControllerManager;
 import com.agiletec.aps.util.ApsWebApplicationUtils;
+import freemarker.cache.TemplateLoader;
 
 import freemarker.ext.jsp.TaglibFactory;
 import freemarker.ext.servlet.AllHttpScopesHashModel;
@@ -41,8 +42,12 @@ import freemarker.template.ObjectWrapper;
 import freemarker.template.TemplateExceptionHandler;
 import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.security.SecureRandom;
 import org.apache.commons.lang3.StringUtils;
+import org.entando.entando.aps.system.services.guifragment.GuiFragment;
+import org.entando.entando.aps.system.services.guifragment.IGuiFragmentManager;
 
 /**
  * Servlet di controllo, punto di ingresso per le richieste di pagine del portale.
@@ -132,6 +137,8 @@ public class ControllerServlet extends freemarker.ext.servlet.FreemarkerServlet 
 		config.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
 		config.setObjectWrapper(wrapper);
 		config.setTemplateExceptionHandler(TemplateExceptionHandler.DEBUG_HANDLER);
+        IGuiFragmentManager fragmentManager = (IGuiFragmentManager) ApsWebApplicationUtils.getBean(SystemConstants.GUI_FRAGMENT_MANAGER, request);
+        config.setTemplateLoader(new EntTemplateLoader(fragmentManager));
 		TemplateModel templateModel = this.createModel(wrapper, this.getServletContext(), request, response);
 		ExecutorBeanContainer ebc = new ExecutorBeanContainer(config, templateModel);
 		reqCtx.addExtraParam(SystemConstants.EXTRAPAR_EXECUTOR_BEAN_CONTAINER, ebc);
@@ -192,5 +199,44 @@ public class ControllerServlet extends freemarker.ext.servlet.FreemarkerServlet 
 
 	private static final String ATTR_APPLICATION_MODEL = ".freemarker.Application";
 	private static final String ATTR_JSP_TAGLIBS_MODEL = ".freemarker.JspTaglibs";
+    
+    protected static class EntTemplateLoader implements TemplateLoader {
+        
+        private IGuiFragmentManager guiFragmentManager;
+        
+        protected EntTemplateLoader(IGuiFragmentManager guiFragmentManager) {
+            this.guiFragmentManager = guiFragmentManager;
+        }
+
+        @Override
+        public Object findTemplateSource(String code) throws IOException {
+            try {
+                GuiFragment fragment = this.guiFragmentManager.getGuiFragment(code);
+                if (null != fragment) {
+                    return fragment.getCurrentGui();
+                }
+                return null;
+            } catch (Exception e) {
+                throw new IOException("Error extracting fragment " + code, e);
+            }
+        }
+
+        @Override
+        public long getLastModified(Object o) {
+            //nothing to do
+            return -1;
+        }
+
+        @Override
+        public Reader getReader(Object templateSource, String encoding) throws IOException {
+            return new StringReader((String) templateSource);
+        }
+
+        @Override
+        public void closeTemplateSource(Object o) throws IOException {
+            //nothing to do
+        }
+        
+    }
 
 }
