@@ -13,7 +13,7 @@
  */
 package org.entando.entando.aps.system.services.controller.executor;
 
-import com.agiletec.aps.system.ReqCtxThreadLocal;
+import com.agiletec.aps.system.EntThreadLocal;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -52,6 +52,7 @@ import com.agiletec.aps.util.ApsWebApplicationUtils;
 
 import freemarker.template.Template;
 import java.util.Arrays;
+import org.entando.entando.aps.system.services.tenant.ITenantManager;
 import org.entando.entando.aps.system.services.widgettype.IWidgetTypeManager;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -71,26 +72,30 @@ public abstract class AbstractWidgetExecutorService {
 			Widget[] widgets = page.getWidgets();
             if (this.parallelWidgetRender) {
                 List<Widget> widgetList = Arrays.asList(widgets);
+                String tenantCode = (String) EntThreadLocal.get(ITenantManager.THREAD_LOCAL_TENANT_CODE);
                 widgetList.parallelStream().forEach(w -> {
-                    ReqCtxThreadLocal.init();
+                    EntThreadLocal.init();
                     int frame = widgetList.indexOf(w);
                     reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
+                    if (null != tenantCode) {
+                        EntThreadLocal.set(ITenantManager.THREAD_LOCAL_TENANT_CODE, tenantCode);
+                    }
                     Widget widget = widgets[frame];
                     try {
                         widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
                     } catch (Exception e) {
                         _logger.error("Error extracting output for frame " + frame, e);
                     }
-                    ReqCtxThreadLocal.destroy();
+                    EntThreadLocal.destroy();
                 });
             } else {
-                ReqCtxThreadLocal.init();
+                EntThreadLocal.init();
                 for (int frame = 0; frame < widgets.length; frame++) {
                     reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
                     Widget widget = widgets[frame];
                     widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
                 }
-                ReqCtxThreadLocal.destroy();
+                EntThreadLocal.destroy();
             }
 		} catch (Throwable t) {
 			String msg = "Error detected during widget preprocessing";
