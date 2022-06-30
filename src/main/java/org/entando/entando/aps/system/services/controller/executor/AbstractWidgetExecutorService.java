@@ -74,7 +74,6 @@ public abstract class AbstractWidgetExecutorService {
                 List<Widget> widgetList = Arrays.asList(widgets);
                 String tenantCode = (String) EntThreadLocal.get(ITenantManager.THREAD_LOCAL_TENANT_CODE);
                 widgetList.parallelStream().forEach(w -> {
-                    EntThreadLocal.init();
                     int frame = widgetList.indexOf(w);
                     reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
                     if (null != tenantCode) {
@@ -86,16 +85,15 @@ public abstract class AbstractWidgetExecutorService {
                     } catch (Exception e) {
                         _logger.error("Error extracting output for frame " + frame, e);
                     }
-                    EntThreadLocal.destroy();
+                    reqCtx.removeExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME);
                 });
             } else {
-                EntThreadLocal.init();
                 for (int frame = 0; frame < widgets.length; frame++) {
                     reqCtx.addExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME, frame);
                     Widget widget = widgets[frame];
                     widgetOutput[frame] = this.buildWidgetOutput(reqCtx, widget, decorators);
+                    reqCtx.removeExtraParam(SystemConstants.EXTRAPAR_CURRENT_FRAME);
                 }
-                EntThreadLocal.destroy();
             }
 		} catch (Throwable t) {
 			String msg = "Error detected during widget preprocessing";
