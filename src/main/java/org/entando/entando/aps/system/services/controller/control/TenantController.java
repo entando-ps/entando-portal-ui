@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import com.agiletec.aps.system.RequestContext;
 import com.agiletec.aps.system.services.controller.ControllerManager;
+import com.agiletec.aps.util.ApsWebApplicationUtils;
 import org.entando.entando.aps.system.services.tenant.ITenantManager;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * @author E.Santoboni
@@ -30,8 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class TenantController extends AbstractControlService {
 
 	private static final Logger _logger = LoggerFactory.getLogger(TenantController.class);
-    
-    private ITenantManager tenantManager;
     
 	@Override
 	public void afterPropertiesSet() throws Exception {
@@ -44,19 +42,11 @@ public class TenantController extends AbstractControlService {
         if (status == ControllerManager.ERROR) {
             return ControllerManager.INVALID_STATUS;
         }
-        String tenantCode = reqCtx.getRequest().getServerName().split("\\.")[0];
-        if (this.getTenantManager().exists(tenantCode)) {
+        String tenantCode = ApsWebApplicationUtils.extractCurrentTenantCode(reqCtx.getRequest());
+        if (null != tenantCode) {
             EntThreadLocal.set(ITenantManager.THREAD_LOCAL_TENANT_CODE, tenantCode);
         }
         return ControllerManager.CONTINUE;
-    }
-
-    protected ITenantManager getTenantManager() {
-        return tenantManager;
-    }
-    @Autowired
-    public void setTenantManager(ITenantManager tenantManager) {
-        this.tenantManager = tenantManager;
     }
 
 }
