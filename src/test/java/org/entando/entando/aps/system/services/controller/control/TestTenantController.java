@@ -18,21 +18,14 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import com.agiletec.aps.BaseTestCase;
 import com.agiletec.aps.system.EntThreadLocal;
 import com.agiletec.aps.system.RequestContext;
-import com.agiletec.aps.system.SystemConstants;
 import com.agiletec.aps.system.services.controller.ControllerManager;
 import com.agiletec.aps.system.services.controller.control.ControlServiceInterface;
-import com.agiletec.aps.system.services.lang.ILangManager;
-import com.agiletec.aps.system.services.lang.Lang;
-import javax.servlet.ServletContext;
 import org.entando.entando.aps.system.services.tenant.ITenantManager;
 import org.entando.entando.ent.exception.EntException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.web.context.WebApplicationContext;
 
 /**
  * @author E.Santoboni
@@ -58,7 +51,7 @@ class TestTenantController extends BaseTestCase {
         Assertions.assertEquals(ControllerManager.CONTINUE, status);
         Assertions.assertEquals("tenant1", EntThreadLocal.get(ITenantManager.THREAD_LOCAL_TENANT_CODE));
     }
-    
+
     @Test
     void testService_2() throws EntException {
         EntThreadLocal.init();
@@ -67,15 +60,16 @@ class TestTenantController extends BaseTestCase {
         Assertions.assertEquals(ControllerManager.CONTINUE, status);
         Assertions.assertNull(EntThreadLocal.get(ITenantManager.THREAD_LOCAL_TENANT_CODE));
     }
-    
+
     public RequestContext createExtRequestContext(String serverName, ApplicationContext applicationContext) {
         RequestContext reqCtx = this.getRequestContext();
-        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletRequest request = new MockHttpServletRequest();//(MockHttpServletRequest) reqCtx.getRequest();
         request.setScheme("http");
         request.setServerName(serverName);
         request.addHeader("Host", serverName);
         request.setContextPath("/Entando");
         request.setAttribute(RequestContext.REQCTX, reqCtx);
+        request.setSession(reqCtx.getRequest().getSession());
         reqCtx.setRequest(request);
         return reqCtx;
     }
