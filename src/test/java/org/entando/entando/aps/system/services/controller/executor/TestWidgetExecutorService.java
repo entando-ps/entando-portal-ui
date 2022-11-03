@@ -26,6 +26,7 @@ import com.agiletec.aps.system.SystemConstants;
 import com.agiletec.aps.system.services.page.IPage;
 import com.agiletec.aps.system.services.page.IPageManager;
 import com.agiletec.aps.system.services.page.Widget;
+import com.agiletec.aps.system.services.pagemodel.IPageModelManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,7 +45,8 @@ class TestWidgetExecutorService extends AbstractTestExecutorService {
 		wes.service(super.getRequestContext());
 		String[] widgetOutput = (String[]) super.getRequestContext().getExtraParam("ShowletOutput");
 		assertNotNull(widgetOutput);
-		assertEquals(currentPage.getModel().getFrames().length, widgetOutput.length);
+        IPageModelManager pageModelManager = (IPageModelManager) super.getApplicationContext().getBean(SystemConstants.PAGE_MODEL_MANAGER);
+		assertEquals(pageModelManager.getPageModel(currentPage.getModelCode()).getFrames().length, widgetOutput.length);
 		for (int i = 0; i < widgetOutput.length; i++) {
 			String output = widgetOutput[i];
 			assertNotNull(output);
@@ -52,7 +54,7 @@ class TestWidgetExecutorService extends AbstractTestExecutorService {
 			if (null == currentWidget) {
 				assertTrue(StringUtils.isBlank(output));
 			} else {
-				GuiFragment fragment = this._guiFragmentManager.getUniqueGuiFragmentByWidgetType(currentWidget.getType().getCode());
+				GuiFragment fragment = this._guiFragmentManager.getUniqueGuiFragmentByWidgetType(currentWidget.getTypeCode());
 				if (null == fragment) {
 					assertTrue(StringUtils.isBlank(output));
 				} else {

@@ -17,6 +17,7 @@ import com.agiletec.aps.system.RequestContext;
 import com.agiletec.aps.system.SystemConstants;
 import com.agiletec.aps.system.services.page.IPage;
 import com.agiletec.aps.system.services.page.IPageManager;
+import com.agiletec.aps.system.services.pagemodel.IPageModelManager;
 import com.agiletec.aps.system.services.pagemodel.PageModel;
 import com.agiletec.aps.util.ApsWebApplicationUtils;
 
@@ -61,7 +62,8 @@ public class PageExecutorService implements ExecutorServiceInterface {
             if (page.getCode().equalsIgnoreCase(notFoundCode)) {
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             }
-            PageModel model = page.getModel();
+            IPageModelManager pageModelManager = (IPageModelManager) ApsWebApplicationUtils.getBean(SystemConstants.PAGE_MODEL_MANAGER, request);
+            PageModel model = pageModelManager.getPageModel(page.getModelCode());
             if (StringUtils.isBlank(model.getTemplate())) {
                 String jspPath = model.getPageModelJspPath();
                 RequestDispatcher dispatcher = request.getSession().getServletContext().getRequestDispatcher(jspPath);
