@@ -17,8 +17,6 @@
     <bean id="RequestValidatorControlService" class="com.agiletec.aps.system.services.controller.control.RequestValidator" 
               parent="abstractControlService" >
         <property name="langManager" ref="LangManager"/>
-        <property name="pageManager" ref="PageManager"/>
-        <property name="configManager" ref="BaseConfigManager"/>
     </bean>
     
     <bean id="AuthenticatorControlService" class="com.agiletec.aps.system.services.controller.control.Authenticator" 
@@ -30,12 +28,9 @@
     <bean id="RequestAuthorizatorControlService" class="com.agiletec.aps.system.services.controller.control.RequestAuthorizator" 
               parent="abstractControlService" >
         <property name="authManager" ref="AuthorizationManager"/>
-        <property name="configManager" ref="BaseConfigManager"/>
     </bean>
     
     <bean id="ErrorManagerControlService" class="com.agiletec.aps.system.services.controller.control.ErrorManager" 
-              parent="abstractControlService" >
-        <property name="configManager" ref="BaseConfigManager"/>
-    </bean>
+              parent="abstractControlService" />
 	
 </beans>
