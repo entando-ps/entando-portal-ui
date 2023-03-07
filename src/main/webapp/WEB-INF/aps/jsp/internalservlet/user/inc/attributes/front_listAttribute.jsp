@@ -26,7 +26,7 @@
 				<li>
 					<label for="<s:property value="%{attribute_id}" />"><s:property value="#elementStatus.index + 1" /></label>
 			</s:else> 
-				<s:if test="#attribute.type == 'Monotext'">
+				<s:if test="#attribute.type == 'Monotext' || #attribute.type == 'Email'">
 					<s:include value="/WEB-INF/aps/jsp/internalservlet/user/inc/attributes/front_monotextAttribute.jsp" />
 				</s:if>
 				<s:elseif test="#attribute.type == 'Text'">

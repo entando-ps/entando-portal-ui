@@ -56,7 +56,7 @@
 			<s:elseif test="#attribute.type == 'Longtext'">
 				<s:include value="/WEB-INF/aps/jsp/internalservlet/user/inc/attributes/front_hypertextAttribute.jsp" />
 			</s:elseif>
-			<s:elseif test="#attribute.type == 'Monotext'">
+			<s:elseif test="#attribute.type == 'Monotext' || #attribute.type == 'Email'">
 				<s:include value="/WEB-INF/aps/jsp/internalservlet/user/inc/attributes/front_monotextAttribute.jsp" />
 			</s:elseif>
 			<s:elseif test="#attribute.type == 'Number'">

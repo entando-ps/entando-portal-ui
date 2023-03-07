@@ -114,7 +114,7 @@
 		</fieldset>
 	</div>
 </s:elseif>
-<s:elseif test="#attribute.type == 'Monotext'">
+<s:elseif test="#attribute.type == 'Monotext' || #attribute.type == 'Email'">
 	<div class="control-group <s:property value="%{' attribute-type-'+#attribute.type+' '}" />">
 		<label class="control-label" for="<s:property value="#attribute_id" />">
 			<wp:i18n key="${i18n_attribute_name}" />
